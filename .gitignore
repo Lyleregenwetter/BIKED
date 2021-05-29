@@ -1,0 +1,11 @@
+Data/BIKED_datatypes.csv
+Data/BIKED_raw.csv
+Data/classdf.csv
+Data/meddf.csv
+Data/OHdf.csv
+Data/BIKED_processed_datatypes.csv
+Data/BIKED_normalized.csv
+Data/synthesized_DeOH.csv
+Data/synthesized_Invsc.csv
+Processed Images/Colored
+Processed Images/Grayscale
