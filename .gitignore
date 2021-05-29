@@ -7,5 +7,9 @@ Data/BIKED_processed_datatypes.csv
 Data/BIKED_normalized.csv
 Data/synthesized_DeOH.csv
 Data/synthesized_Invsc.csv
-Processed Images/Colored
-Processed Images/Grayscale
+Processed Images/Colored/(*
+Processed Images/Grayscale/(*
+Images
+Standardized Images
+Data
+Segmented Bike Images

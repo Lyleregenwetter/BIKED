@@ -25,6 +25,9 @@ Regenwetter, L., Curry, B., and Ahmed, F., 2021. “Biked: A dataset and machine
 Pip doesn't seem to work for [SHAP](https://github.com/slundberg/shap), so I recommend conda. Use either pip or conda for the other packages.
 ## Data
 
+### Downloading the Data
+Due to file size constraints, the raw data is not included in the repo, but can be downloaded from [Dropbox](https://www.dropbox.com/sh/b5y25zdjq9q0890/AABULjSD9ZmK-bmuDwoWua7Ba?dl=0). To work with the data, Download the data, unzip, then copy the three folders: Images, Standardized Images, and Data to the BIKED git folder. Currently, this Repo does not have any example code using the segmented component images.
+
 ### Numerical Data
 
 **Data/BIKED_processed.csv** contains the final processed data after miscellaneous processing steps (Sections 3.1-3.6 in the paper). This data is a csv file containing 4512 models and 2395 parameters. The first column of the csv file contains the model numbers and the first row contains the parameter names. To load the dataset into a Pandas DataFrame, use the following code. This dataframe will have model numbers as indices and parameters as column names.
@@ -84,7 +87,7 @@ See **Functions/VAEv2.ipynb** for VAE implementations.
 ### Other Preprepared Data
 In case you want to use BIKED but require different processing steps than the generic approach, two other versions of biked are provided besides the standard BIKED_processed data.
 
-1. **BIKED_raw.csv** contains the raw parameter space of the data after File Standardization (Section 3.2 in the paper). This data contains 4791 models and 23813 parameters. Due to file size constraints, this raw data is not included in the repo, but can be downloaded from [Dropbox](https://www.dropbox.com/sh/b5y25zdjq9q0890/AABULjSD9ZmK-bmuDwoWua7Ba?dl=0).
+1. **BIKED_raw.csv** contains the raw parameter space of the data after File Standardization (Section 3.2 in the paper). This data contains 4791 models and 23813 parameters.
 
 2. **BIKED_reduced.csv** contains the reduced parameter space of the data after parameter space reduction (Section 3.5 in the paper). This data contains 4512 models and 1320 parameters.
 
