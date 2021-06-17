@@ -30,6 +30,8 @@ def normalizeDF(save=1): #Normalize BIKED Data
 
     
 def standardizeReOH(df):
+ # Make up for the fact that generated samples may not have the same number of classes as the original data
+ # Can be used to compare against the final BIKED_processed data, as it will have the same parameter space
     Impdf=loadImpDF()
     for col in Impdf.columns:
         if col not in df.columns:
@@ -92,8 +94,7 @@ def deOH(file="vaegendf"): #Revert one-hot encoding back to categorical features
 
 #Take a dataframe of features and insert features into a baseline bikecad file to generate bcad files
 #BikeCAD files are XML files with the .bcad extension
-def genBCAD(file="vaegen"):
-    df=pd.read_csv(Path("../data/"+file+"_DeOH.csv"), index_col=0) 
+def genBCAD(df):
     # VAEFunctions.removeFiles("../Generated BCAD Files/Files")
     for modelidx in df.index: #loop over the models in the dataframe
         print(modelidx)
@@ -144,6 +145,12 @@ def loadVAEGenDF():
     print("Loaded VAE-Generated Dataframe in  %s seconds" % (time.time() - start_time))
     return df
 
+
+def loadCorrDF():
+    start_time = time.time()
+    df=pd.read_csv(Path("../Data/corrdf.csv"), index_col=0) 
+    print("Loaded Correlation Dataframe in  %s seconds" % (time.time() - start_time))
+    return df
 
 def exportCorrDF(fvs=0, method='cosine'):
     start_time = time.time()
@@ -249,7 +256,7 @@ def getclassdf():
 def imputeNan(df): #Impute missing Values and remove outliers
 
     start_time = time.time()
-    flag=0#flag==0 for simple imputer, flag==1 for KNN imputer
+    flag=1#flag==0 for simple imputer, flag==1 for KNN imputer
     
     
     #The Following lines can be used to remove outliers past a certain SD
@@ -260,18 +267,18 @@ def imputeNan(df): #Impute missing Values and remove outliers
     
     
     #Remove values with magnitude higher then preset cutoff 
-    cutoff=10000
+    cutoff=100000
     nan_value = float("NaN")
     df=df.apply(lambda x: [y if -cutoff<=y <= cutoff else nan_value for y in x])
 
     #Impute     
     if flag==0:
-        imp = SimpleImputer(missing_values=np.nan,strategy='mean')
+        imp = SimpleImputer(missing_values=np.nan,strategy='median')
         imp=imp.fit_transform(df)
         impdf=pd.DataFrame(data=imp, index=df.index.values, columns=df.columns)
         # impdf = df.fillna(df.mean())
     else:
-        imp = KNNImputer(n_neighbors=2)
+        imp = KNNImputer(n_neighbors=5)
         imp=imp.fit_transform(df)
         impdf=pd.DataFrame(data=imp, index=df.index.values, columns=df.columns)
     dtypedf=pd.read_csv(Path("../Data/BIKED_datatypes.csv"), index_col=0).T
@@ -314,7 +321,6 @@ def convertOneHot(df, save=1):
     if save==1:
         df.to_csv(Path('../Data/OHdf.csv'))
     
-    countdf=df.dtypes.value_counts()
     print("Onehot Completed in %s seconds" % (time.time() - start_time))
     return df
 

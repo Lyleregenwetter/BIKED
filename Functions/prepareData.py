@@ -10,11 +10,11 @@ import time
 import paramRedux
 
 
-def prepareData():
+def prepareData(mini=0):
     start_time = time.time()
     # genxmldf.genxmldf() #This line to (re)generate the full raw dataframe from bcad files
     
-    paramRedux.paramRedux()  #This line to (re)generate the reduced parameter space dataframe from raw dataframe
+    paramRedux.paramRedux(mini)  #This line to (re)generate the reduced parameter space dataframe from raw dataframe
     dropdf=dataFrameTools.loadDropDF()
     
     #turn on intermediates to save a few intermediate dataframes from partway through the processing

@@ -35,21 +35,27 @@ def cattSNE():
     plotClass(df, title="PCA")
     
 #Run Principle Component Analysis
-def runPCA():
+def runPCA(plotclass=0):
     start_time=time.time()
     df=dataFrameTools.loadScaledDF()
     rawdf=dataFrameTools.loadDropDF()
     result=rPCA(df,rawdf) #Call the PCA run function
-    plotClass(result,title="PCA")
+    if plotclass==1:
+        plotClass(result,title="PCA")
+    else:
+        plotNum(result,title="PCA")
     print("PCA plotted in %s seconds" % (time.time() - start_time))
     return result
 #Run T-Distribured Stochastic Neighbor Embedding
-def runtSNE(ppx=5):
+def runtSNE(plotclass=0, ppx=5):
     start_time=time.time()
     df=dataFrameTools.loadScaledDF()
     rawdf=dataFrameTools.loadDropDF()
     result=rtSNE(df,rawdf,ppx) #Call the tSNE run function
-    plotClass(result,title="t-SNE")
+    if plotclass==1:
+        plotClass(result,title="t-SNE")
+    else:
+        plotNum(result,title="t-SNE")
     print("tSNE plotted in %s seconds" % (time.time() - start_time))
     result.to_csv(Path("../Data/tsnedf.csv"))
     return result
@@ -216,4 +222,28 @@ def plotClass(resdf, title=""):
     plt.setp(ax.get_legend().get_texts(), fontsize='10') # for legend text
     plt.setp(ax.get_legend().get_title(), fontsize='12') # for legend title
     plt.show()
+    
+def plotNum(resdf, title=""):
+    resdf["Model Number"]=resdf.index
+    plt.figure(figsize=(7.5,7.5))
+    ax=sns.scatterplot(
+        x="dim1", y="dim2",
+        hue="Model Number",
+        palette=sns.color_palette("flare", as_cmap=True),
+        # palette=["#9d6d00", "#903ee0", "#11dc79", "#f568ff", "#419500", "#013fb0", 
+        #   "#f2b64c", "#007ae4", "#ff905a", "#33d3e3", "#9e003a", "#019085", 
+        #   "#950065", "#afc98f", "#ff9bfa", "#83221d", "#01668a", "#ff7c7c", 
+        #   "#643561", "#75608a"],
+        # palette=['#e6194B', '#3cb44b', '#4363d8', '#f58231', '#911eb4', '#42d4f4', '#f032e6', '#bfef45', '#fabed4', '#469990', '#dcbeff', '#9A6324', '#800000', '#aaffc3', '#808000', '#ffd8b1', '#0000e5', '#a9a9a9', '#000000'],
+        data=resdf,
+        # legend="full",
+        alpha=1,
+        s=8
+    )
+    # ax.set_title(title)
+    # ax.legend(labelspacing=0.1,handletextpad=0.1,markerscale=1.4,fontsize='xx-large',frameon=False)
+    plt.setp(ax.get_legend().get_texts(), fontsize='12') # for legend text
+    plt.setp(ax.get_legend().get_title(), fontsize='14') # for legend title
+    plt.show()
+    
     
