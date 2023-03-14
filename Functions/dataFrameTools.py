@@ -15,46 +15,48 @@ from sklearn.metrics.pairwise import cosine_similarity
 from pathlib import Path
 from scipy.spatial import KDTree
 # import checkdf
-def normalizeDF(save=1): #Normalize BIKED Data
+def normalizeDF(save=1, dataset=""): #Normalize BIKED Data
     start_time = time.time()
-    ImpDF=loadImpDF()
+    ImpDF=loadProcessedDF(dataset)
     min_max_scaler = preprocessing.MinMaxScaler()
     # min_max_scaler = preprocessing.StandardScaler()
     x_scaled = min_max_scaler.fit_transform(ImpDF.values)
     # x_scaled=min_max_scaler.transform
     scdf = pd.DataFrame(x_scaled, columns=ImpDF.columns,index=ImpDF.index.values)
     if save==1:
-        scdf.to_csv(Path('../Data/BIKED_normalized.csv')) 
+        scdf.to_csv(Path('../Data/' + dataset + 'BIKED_normalized.csv')) 
         print("Scaled Dataframe Successfully exported to CSV in  %s seconds" % (time.time() - start_time))
     return scdf
 
     
-def standardizeReOH(df):
+def standardizeReOH(df, dataset, intermediates=0):
  # Make up for the fact that generated samples may not have the same number of classes as the original data
  # Can be used to compare against the final BIKED_processed data, as it will have the same parameter space
-    Impdf=loadImpDF()
+    Impdf=loadProcessedDF(dataset)
     for col in Impdf.columns:
         if col not in df.columns:
             df[col]=[0]*len(df.index)
+    if intermediates!=0:
+        df.to_csv(Path("../data/"+intermediates+"_reDF.csv"))
     return df
 
-def deNormalizeDF(file="vaegendf", save=1):
+def deNormalizeDF(df, dataset="", round=1, intermediates=1):
     start_time = time.time()
-    df=pd.read_csv(Path("../data/"+file+".csv"), index_col=0)
-    ImpDF=loadImpDF()
+    ImpDF=loadProcessedDF(dataset)
     min_max_scaler = preprocessing.MinMaxScaler()
     # min_max_scaler = preprocessing.StandardScaler()
     min_max_scaler.fit(ImpDF.values)
     invscaled=min_max_scaler.inverse_transform(df)   
     invdf = pd.DataFrame(invscaled, columns=df.columns, index=df.index)
-    if save==1:
-        invdf.to_csv(Path("../data/"+file+"_Invsc.csv")) 
+    if round==1:
+        invdf=invdf.round(6)
+    if intermediates!=0:
+        invdf.to_csv(Path("../data/"+intermediates+"_denorm.csv")) 
         print("Inverse Scaled Dataframe Successfully exported to CSV in  %s seconds" % (time.time() - start_time))
     return invdf
 
 
-def deOH(file="vaegendf"): #Revert one-hot encoding back to categorical features
-    df=pd.read_csv(Path("../data/"+file+"_Invsc.csv"), index_col=0) 
+def deOH(df, dataset="", intermediates=0): #Revert one-hot encoding back to categorical features
     newdf=pd.DataFrame()
 # we will keep track of the most probable category for each model and categorical feature in a dict with keys containing model/feature pairs
     maxprobs={} 
@@ -72,35 +74,33 @@ def deOH(file="vaegendf"): #Revert one-hot encoding back to categorical features
                     maxprobs[(i,front)]=prob
                     newdf.at[i,front]=back
         else:
-            newdf[column]=df[column]
+            newdf.at[:,column]=df[column]
     #Make sure types of deohdf match the types of seldf
-    dtypedf=pd.read_csv(Path("../Data/BIKED_datatypes.csv"), index_col=0).T
-    # print(newdf.dtypes["DOWNTUBE1SnSCheck"])
-    # print(newdf["DOWNTUBE1SnSCheck"])
-    # print(newdf["DOWNTUBE1SnSCheck"].map({'False':False, 'True':True}))
+    dtypedf=pd.read_csv(Path("../Data/" + dataset + "BIKED_datatypes.csv"), index_col=0).T
+
     for column in newdf.columns:
         if dtypedf.at["type",column]=="bool":
             if newdf.dtypes[column]==np.float64:
                 newdf[column] = newdf[column].round().astype('bool')
             else:
-                newdf["DOWNTUBE1SnSCheck"].map({'False':False, 'True':True})
+                newdf[column].map({'False':False, 'True':True})
         if dtypedf.at["type",column]=="int64":
             if newdf.dtypes[column]==np.float64:
                 newdf[column] = newdf[column].round().astype('int64')
             else:
                 newdf[column] = pd.to_numeric(newdf[column]).astype('int64')
-    newdf.to_csv(Path(Path("../data/"+file+"_DeOH.csv")))
+    if intermediates!=0:
+        newdf.to_csv(Path(Path("../data/"+intermediates+"_deOH.csv")))
     return newdf
 
 #Take a dataframe of features and insert features into a baseline bikecad file to generate bcad files
 #BikeCAD files are XML files with the .bcad extension
-def genBCAD(df):
+def genBCAD(df, sourcepath = "PlainRoadbikestandardized.txt", targetpath = "../Generated BCAD Files/Files/"):
     # VAEFunctions.removeFiles("../Generated BCAD Files/Files")
     for modelidx in df.index: #loop over the models in the dataframe
-        print(modelidx)
         count=0
-        sourcefile = open(Path("PlainRoadbikestandardized.txt"), 'r') 
-        targetfile= open(Path("../Generated BCAD Files/Files/" + str(modelidx) + ".bcad"), 'w')
+        sourcefile = open(Path(sourcepath), 'r') 
+        targetfile= open(Path(targetpath + str(modelidx) + ".bcad"), 'w')
         lines = sourcefile.readlines()
         linecount=0
         for line in lines: #Loop over the lines of the bcad file
@@ -133,9 +133,9 @@ def genBCAD(df):
         sourcefile.close()
         targetfile.close()
 
-def loadScaledDF():
+def loadScaledDF(dataset=""):
     start_time = time.time()
-    df=pd.read_csv(Path("../Data/BIKED_normalized.csv"), index_col=0) 
+    df=pd.read_csv(Path("../Data/" + dataset + "BIKED_normalized.csv"), index_col=0) 
     print("Loaded Scaled Dataframe in  %s seconds" % (time.time() - start_time))
     return df
     
@@ -146,15 +146,16 @@ def loadVAEGenDF():
     return df
 
 
-def loadCorrDF():
+def loadCorrDF(dataset="", metric="pearson"):
     start_time = time.time()
-    df=pd.read_csv(Path("../Data/corrdf.csv"), index_col=0) 
+    df=pd.read_csv(Path("../Data/" + dataset + "-" + metric+ "corrdf.csv"), index_col=0) 
     print("Loaded Correlation Dataframe in  %s seconds" % (time.time() - start_time))
     return df
 
-def exportCorrDF(fvs=0, method='cosine'):
+
+def exportCorrDF(fvs=0, method='cosine', dataset=""):
     start_time = time.time()
-    ImpDF=loadImpDF()
+    ImpDF=loadProcessedDF(dataset)
     if fvs==1:
         ImpDF=ImpDF.T
     if method=="pearson" or method=="kendall" or method=="spearman":
@@ -162,7 +163,7 @@ def exportCorrDF(fvs=0, method='cosine'):
     else:
         corrarr=cosine_similarity(ImpDF)
         corrdf=pd.DataFrame(data=corrarr,index=ImpDF.index.values, columns=ImpDF.index.values)
-    filepath=Path('../Data/corrdf.csv')
+    filepath=Path('../Data/' + dataset + "-" + method + 'corrdf.csv')
     if fvs==0:
         corrdf.to_csv(filepath) 
     else:
@@ -181,28 +182,28 @@ def loadOHDF():
     print("Loaded One-Hot Dataframe in  %s seconds" % (time.time() - start_time))
     return df
 
-def loadDropDF():
+def loadDropDF(dataset=""):
     start_time = time.time()
-    df=pd.read_csv(Path("../Data/BIKED_reduced.csv"), index_col=0) 
+    df=pd.read_csv(Path("../Data/" + dataset + "BIKED_reduced.csv"), index_col=0) 
     print("Loaded Reduced Parameter Space Dataframe in  %s seconds" % (time.time() - start_time))
     return df
 
-def loadClassDF(): 
+def loadClassDF(dataset=""): 
     start_time = time.time()
-    df=pd.read_csv(Path("../Data/classdf.csv"), index_col=0)
+    df=pd.read_csv(Path("../Data/" + dataset + "classdf.csv"), index_col=0)
     print("Loaded Class  Dataframe in  %s seconds" % (time.time() - start_time))
     return df
 
-def loadImpDF():
+def loadProcessedDF(dataset=""):
     start_time = time.time()
-    df=pd.read_csv(Path("../Data/BIKED_processed.csv"), index_col=0)
+    df=pd.read_csv(Path("../Data/" + dataset + "BIKED_processed.csv"), index_col=0)
     print("Loaded Imputed Dataframe in  %s seconds" % (time.time() - start_time))
     return df
 
-def processDF(dropdf, intermediates=0):
+def processDF(dropdf, intermediates=0, dataset=""):
     dropdf=dropClasses(dropdf) #Remove Class Labels from processed DF
     
-    OHdf=convertOneHot(dropdf, save=intermediates)
+    OHdf=convertOneHot(dropdf, dataset=dataset, save=intermediates)
     
     
     # Uncomment the following 4 lines to select only SHAP features
@@ -211,11 +212,11 @@ def processDF(dropdf, intermediates=0):
     # OHdf=OHdf[shapcols.values]
     # OHdf.to_csv(Path("../Data/OHdf.csv"))
     
-    imputeNan(OHdf)
-    normalizeDF()
+    imputeNan(OHdf, dataset)
+    normalizeDF(1, dataset)
     # getDataCounts(seldf)
     if intermediates==1:
-        getclassdf()
+        getclassdf(dataset)
     
     # getDataCounts(OHdf)
     print("Dataframe Successfully exported to CSV")
@@ -223,20 +224,22 @@ def processDF(dropdf, intermediates=0):
 
 def dropClasses(df):
     #Drop any parameters not desired in the application
-    df=df.drop("BIKESTYLE", axis=1)
+    if "BIKESTYLE" in df.columns:
+        df=df.drop("BIKESTYLE", axis=1)
     return df
 
-def dropData(df):
+def dropData(df, dataset=""):
     # df=df.drop(list(range(101,4801)), errors='ignore')
-    df.dropna(axis=0,how='all',inplace=True)
-    df.dropna(axis=1,how='all',inplace=True)
-    df=df.loc[:, ~(df == df.iloc[0]).all()]
+    if dataset=="" or dataset=="mini":
+        df.dropna(axis=0,how='all',inplace=True)
+        df.dropna(axis=1,how='all',inplace=True)
+        df=df.loc[:, ~(df == df.iloc[0]).all()]
     return df
  
 
 
-def getclassdf():
-    df=loadScaledDF()
+def getclassdf(dataset=""):
+    df=loadScaledDF(dataset)
     df=df.astype('float64')
     dropdf=loadDropDF()  
     df["BIKESTYLE"]=dropdf["BIKESTYLE"]    
@@ -248,12 +251,12 @@ def getclassdf():
         kdb=KDTree(styledf.values)
         num=kdb.query(classdf.loc[style],k=1)[-1]
         indices.append(styledf.index[num])
-    classdf.to_csv(Path("../Data/classdf.csv"))    
+    classdf.to_csv(Path("../Data/" + dataset + "classdf.csv"))    
     meddf=pd.DataFrame(index=classdf.index, columns=["medidx"],data=indices)
-    meddf.to_csv(Path("../Data/meddf.csv"))
+    meddf.to_csv(Path("../Data/" + dataset + "meddf.csv"))
 
    
-def imputeNan(df): #Impute missing Values and remove outliers
+def imputeNan(df, dataset=""): #Impute missing Values and remove outliers
 
     start_time = time.time()
     flag=1#flag==0 for simple imputer, flag==1 for KNN imputer
@@ -281,7 +284,7 @@ def imputeNan(df): #Impute missing Values and remove outliers
         imp = KNNImputer(n_neighbors=5)
         imp=imp.fit_transform(df)
         impdf=pd.DataFrame(data=imp, index=df.index.values, columns=df.columns)
-    dtypedf=pd.read_csv(Path("../Data/BIKED_datatypes.csv"), index_col=0).T
+    dtypedf=pd.read_csv(Path("../Data/" + dataset + "BIKED_datatypes.csv"), index_col=0).T
     for column in impdf.columns:
         if ' OHCLASS: ' in column:
             front,back=column.split(' OHCLASS: ')
@@ -289,17 +292,22 @@ def imputeNan(df): #Impute missing Values and remove outliers
             front=column
         if dtypedf.at["type",front]=="int64":
             impdf[column] = impdf[column].round().astype('int64')
-    impdf.to_csv(Path('../Data/BIKED_processed.csv')) 
+    impdf.to_csv(Path('../Data/' + dataset + 'BIKED_processed.csv')) 
     print("Finished imputing Nan values in  %s seconds" % (time.time() - start_time))
 
 
 
-def convertOneHot(df, save=1):
+def convertOneHot(df, dataset="", save=1):
     start_time=time.time()
     colstoOH=[]
     count=0
     colstoOH=[]
-    dtypedf=pd.read_csv(Path("../data/BIKED_datatypes.csv"), index_col=0).T
+    # try:
+    #     dtypedf==None
+    # except:
+    #     pass
+    # else:
+    dtypedf=pd.read_csv(Path("../Data/" + dataset + "BIKED_datatypes.csv"), index_col=0).T        
     for col in df.columns:
         if dtypedf.at["type",col] =="str" or dtypedf.at["type",col]=="object":
             colstoOH.append(col)
@@ -317,10 +325,9 @@ def convertOneHot(df, save=1):
         if col in dtypedf.columns:
             count+=1
             OHdtypes[col]=dtypedf.at["type",col]
-    OHdtypes.to_csv("../Data/BIKED_processed_datatypes.csv",header=["type"])
+    OHdtypes.to_csv("../Data/" + dataset + "BIKED_processed_datatypes.csv",header=["type"])
     if save==1:
-        df.to_csv(Path('../Data/OHdf.csv'))
-    
+        df.to_csv(Path('../Data/' + dataset + 'OHdf.csv'))
     print("Onehot Completed in %s seconds" % (time.time() - start_time))
     return df
 
