@@ -21,7 +21,7 @@ def processGen(file="synthesized", gen_name="", dataset="", genbcad=1, denorm = 
     if denorm:
         df=dataFrameTools.deNormalizeDF(df, dataset, 1, intermediates)
     if check: #-1 for use all
-        df = checkdf.checkdf(df, gen_name, 0, intermediates)
+        df = checkdf.checkdf(df, gen_name, 1, intermediates)
     if from_OH:
         
         df=dataFrameTools.deOH(df, dataset, intermediates)

@@ -38,7 +38,8 @@ def checkdf(df, genname, printcodes=0, intermediates=0):
        'SBLADEW front', 'SBLADEW rear', 'Saddle length', 'Saddle height',
        'Down tube diameter', 'Seatpost LENGTH']
         intersection = list(set(collist).intersection(set(list(df.columns))))
-        subset = df[intersection]
+        subset = df.loc[i, intersection]
+#         print((subset < 0).any())
         if (subset < 0).any().any():
             valid=0
             if printcodes==1:
@@ -88,13 +89,13 @@ def checkdf(df, genname, printcodes=0, intermediates=0):
                     print("Model " + str(i) + " Front Spokes too short")
         except:
             pass
-        try:
-            if df.at[i, "Wheel diameter rear"]>df.at[i, "Wheel cut"]:
-                valid=0
-                if printcodes==1:
-                    print("Model " + str(i) + " Wheel cut too small")
-        except:
-            pass
+#         try:
+#             if df.at[i, "Wheel diameter rear"]>df.at[i, "Wheel cut"]:
+#                 valid=0
+#                 if printcodes==1:
+#                     print("Model " + str(i) + " Wheel cut too small")
+#         except:
+#             pass
         try:
             if df.at[i, "Wheel diameter rear"]<df.at[i, "ERD rear"]:
                 valid=0
