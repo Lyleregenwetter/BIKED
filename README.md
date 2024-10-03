@@ -96,7 +96,7 @@ In case you want to use BIKED but require different processing steps than the ge
 
 ### Custom Processing Steps
 
-Alternatively, BIKED can be processed using custom processing steps. The functionality to process and curate the dataset is included in the **Functions/prepareData.py** which calls a set of helper functions contained within **Functions/dataFrameTools.py** and **Functions/paramRedux.py**. If custom data processing steps are desired, these functions can be used as a starting point. Currently the dataset is processed (or reprocessed) using the BIKED_raw as a starting point (Reminder: This needs to be downloaded from the [Dropbox](https://www.dropbox.com/sh/b5y25zdjq9q0890/AABULjSD9ZmK-bmuDwoWua7Ba?dl=0) and moved to the Data/ folder.) To reprocess the dataset:
+Alternatively, BIKED can be processed using custom processing steps. The functionality to process and curate the dataset is included in the **Functions/prepareData.py** which calls a set of helper functions contained within **Functions/dataFrameTools.py** and **Functions/paramRedux.py**. If custom data processing steps are desired, these functions can be used as a starting point. Currently the dataset is processed (or reprocessed) using the BIKED_raw as a starting point (Reminder: This needs to be downloaded from the [Harvard Dataverse](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/GHQEDP) and moved to the Data/ folder.) To reprocess the dataset:
 
 1. Navigate to functions directory:
 
